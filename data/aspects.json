@@ -1,0 +1,7 @@
+[
+    {"id": 0, "name": "Conjunction", "symbol": "☌", "angle": 0, "orb": 9},
+    {"id": 1, "name": "Opposition", "symbol": "☍", "angle": 180, "orb": 8},
+    {"id": 2, "name": "Trine", "symbol": "△", "angle": 120, "orb": 7},
+    {"id": 3, "name": "Square", "symbol": "□", "angle": 90, "orb": 6},
+    {"id": 4, "name": "Sextile", "symbol": "⚹", "angle": 60, "orb": 4}
+]

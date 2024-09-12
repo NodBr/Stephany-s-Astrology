@@ -1,0 +1,10 @@
+Great Aspects/
+├── home.py
+├── utils.py
+└── pages/
+    ├── 1_Great_Trine.py
+    └── 9_Settings.py
+└── data/
+    ├── aspects.json
+    ├── planets.json
+    └── signs.json

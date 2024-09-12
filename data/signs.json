@@ -1,0 +1,14 @@
+[
+    {"id": 0, "name": "Aries", "symbol": "♈︎", "element": "Fire", "modality": "Cardinal"},
+    {"id": 1, "name": "Taurus", "symbol": "♉︎", "element": "Earth", "modality": "Fixed"},
+    {"id": 2, "name": "Gemini", "symbol": "♊︎", "element": "Air", "modality": "Mutable"},
+    {"id": 3, "name": "Cancer", "symbol": "♋︎", "element": "Water", "modality": "Cardinal"},
+    {"id": 4, "name": "Leo", "symbol": "♌︎", "element": "Fire", "modality": "Fixed"},
+    {"id": 5, "name": "Virgo", "symbol": "♍︎", "element": "Earth", "modality": "Mutable"},
+    {"id": 6, "name": "Libra", "symbol": "♎︎", "element": "Air", "modality": "Cardinal"},
+    {"id": 7, "name": "Scorpio", "symbol": "♏︎", "element": "Water", "modality": "Fixed"},
+    {"id": 8, "name": "Sagittarius", "symbol": "♐︎", "element": "Fire", "modality": "Mutable"},
+    {"id": 9, "name": "Capricorn", "symbol": "♑︎", "element": "Earth", "modality": "Cardinal"},
+    {"id": 10, "name": "Aquarius", "symbol": "♒︎", "element": "Air", "modality": "Fixed"},
+    {"id": 11, "name": "Pisces", "symbol": "♓︎", "element": "Water", "modality": "Mutable"}
+]
