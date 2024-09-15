@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import datetime as dt
 import swisseph as swe
-from utils import datetime_to_julday, initialize_session, sign_string, find_aspect
+from utils import datetime_to_julday, initialize_session, sign_string, find_aspect, birth_data
 
 initialize_session()
 
@@ -10,43 +10,26 @@ initialize_session()
 st.title('Natal Chart Calculator')
 st.header('Birth Data')
 
-# Input columns for first and last names
-first_name_col, last_name_col = st.columns(2)
-first_name = first_name_col.text_input('First Name', 'First Name')
-last_name = last_name_col.text_input('Last Name', 'Last Name')
-
-# Date, hour, and minute inputs
-min_date, max_date = dt.date(1000, 1, 1), dt.date(3000, 12, 31)
-date_col, hour_col, minute_col = st.columns([2, 1, 1])
-date = date_col.date_input('Birthday', value=dt.date.today(), min_value=min_date, max_value=max_date, format='DD/MM/YYYY')
-hour = hour_col.number_input('Hour UTC', 0, 23, 0)
-minute = minute_col.number_input('Minute', 0, 59, 0)
-
-# Latitude and Longitude inputs with direction selection
-st.subheader('Birth Location Coordinates')
-lat_deg_col, lat_min_col, lat_dir_col = st.columns(3)
-latitude_deg = lat_deg_col.number_input('Latitude Degrees', 0, 90)
-latitude_min = lat_min_col.number_input('Latitude Minutes', 0, 59)
-latitude_direction = lat_dir_col.selectbox('N/S', ['N', 'S'])
-
-lon_deg_col, lon_min_col, lon_dir_col = st.columns(3)
-longitude_deg = lon_deg_col.number_input('Longitude Degrees', 0, 180)
-longitude_min = lon_min_col.number_input('Longitude Minutes', 0, 59)
-longitude_direction = lon_dir_col.selectbox('W/E', ['W', 'E'])
+birth_data()
 
 # Chart display logic
 if st.button('Show Chart'):
-    st.header(f'{first_name} {last_name}\'s Natal Chart')
-    
+    st.header(f'{st.session_state.first_name} {st.session_state.last_name}\'s Natal Chart')
+
     # Convert input date and time to Julian Day
-    birth_datetime = dt.datetime(date.year, date.month, date.day, hour, minute)
+    birth_datetime = dt.datetime(
+        st.session_state.bday_date.year,
+        st.session_state.bday_date.month,
+        st.session_state.bday_date.day,
+        st.session_state.bday_hour,
+        st.session_state.bday_minute)
     birth_julian_day = datetime_to_julday(birth_datetime)
 
     # Convert latitude and longitude to decimal format
-    latitude_decimal = latitude_deg + latitude_min / 60
-    longitude_decimal = longitude_deg + longitude_min / 60
-    latitude_decimal *= -1 if latitude_direction == 'S' else 1
-    longitude_decimal *= -1 if longitude_direction == 'W' else 1
+    latitude_decimal = st.session_state.bday_latitude_deg + st.session_state.bday_latitude_min / 60
+    longitude_decimal = st.session_state.bday_longitude_deg + st.session_state.bday_longitude_min / 60
+    latitude_decimal *= -1 if st.session_state.bday_latitude_direction == 'S' else 1
+    longitude_decimal *= -1 if st.session_state.bday_longitude_direction == 'W' else 1
 
     # Calculate astrological houses
     calculated_houses_data = []

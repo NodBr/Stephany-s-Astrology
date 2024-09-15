@@ -1,7 +1,7 @@
 import streamlit as st
 import swisseph as swe
 import datetime as dt
-from utils import initialize_session, datetime_to_julday, calculate_sign
+from utils import initialize_session, datetime_to_julday, calculate_sign, birth_data
 import pandas as pd
 import pydeck as pdk
 
@@ -11,42 +11,20 @@ initialize_session()
 st.title('Natal Chart Calculator')
 st.header('Birth Data')
 
-# Input columns for first and last names
-first_name_col, last_name_col = st.columns(2)
-first_name = first_name_col.text_input('First Name', 'First Name')
-last_name = last_name_col.text_input('Last Name', 'Last Name')
+birth_data()
 
-# Date, hour, and minute inputs
-min_date, max_date = dt.date(1000, 1, 1), dt.date(3000, 12, 31)
-date_col, hour_col, minute_col = st.columns([2, 1, 1])
-date = date_col.date_input('Birthday', value=dt.date.today(), min_value=min_date, max_value=max_date, format='DD/MM/YYYY')
-hour = hour_col.number_input('Hour UTC', 0, 23, 0)
-minute = minute_col.number_input('Minute', 0, 59, 0)
-
-# Latitude and Longitude inputs with direction selection
-st.subheader('Birth Location Coordinates')
-lat_deg_col, lat_min_col, lat_dir_col = st.columns(3)
-latitude_deg = lat_deg_col.number_input('Latitude Degrees', 0, 90)
-latitude_min = lat_min_col.number_input('Latitude Minutes', 0, 59)
-latitude_direction = lat_dir_col.selectbox('N/S', ['N', 'S'])
-
-lon_deg_col, lon_min_col, lon_dir_col = st.columns(3)
-longitude_deg = lon_deg_col.number_input('Longitude Degrees', 0, 180)
-longitude_min = lon_min_col.number_input('Longitude Minutes', 0, 59)
-longitude_direction = lon_dir_col.selectbox('W/E', ['W', 'E'])
-
-rs_year = st.number_input(label='Solar Revolution Year', min_value=date.year, max_value=date.year+120, value=date.year, step=1, label_visibility='visible')
+st.session_state.bday_rs_year = st.number_input(label='Solar Revolution Year', min_value=st.session_state.bday_date.year, max_value=st.session_state.bday_date.year+120, value=st.session_state.bday_date.year, step=1, label_visibility='visible')
 
 if st.button(label='Run'):
     # Convert input date and time to Julian Day
-    birth_dt = dt.datetime(date.year, date.month, date.day, hour, minute)
+    birth_dt = dt.datetime(st.session_state.bday_date.year, st.session_state.bday_date.month, st.session_state.bday_date.day, st.session_state.bday_hour, st.session_state.bday_minute)
     birth_jd = datetime_to_julday(birth_dt)
     
     # Find Sun's longitude during birth time
     sun_long = swe.calc_ut(birth_jd, 0)[0][0]
     
     # Find julian day for the start of Solar Revolution Year
-    year_start_dt = dt.datetime(rs_year, 1, 1, 0, 0, 0, 0)
+    year_start_dt = dt.datetime(st.session_state.bday_rs_year, 1, 1, 0, 0, 0, 0)
     year_start_jd = datetime_to_julday(year_start_dt)
     
     # Find the julian day of the moment of the Solar Revolution

@@ -3,6 +3,7 @@ import streamlit as st
 import datetime
 import swisseph as swe
 import pandas as pd
+import datetime as dt
 
 def load_json_file(file_path):
     """
@@ -75,6 +76,31 @@ def initialize_session():
     # Initialize default date range in session_state
     st.session_state.start_date = datetime.date.today()
     st.session_state.end_date = datetime.date.today() + datetime.timedelta(days=365)
+
+def birth_data():
+    # Input columns for first and last names
+    first_name_col, last_name_col = st.columns(2)
+    st.session_state.first_name = first_name_col.text_input('First Name', 'First Name')
+    st.session_state.last_name = last_name_col.text_input('Last Name', 'Last Name')
+
+    # Date, hour, and minute inputs
+    min_date, max_date = dt.date(1000, 1, 1), dt.date(3000, 12, 31)
+    date_col, hour_col, minute_col = st.columns([2, 1, 1])
+    st.session_state.bday_date = date_col.date_input('Birthday', value=dt.date.today(), min_value=min_date, max_value=max_date, format='DD/MM/YYYY')
+    st.session_state.bday_hour = hour_col.number_input('Hour UTC', 0, 23, 0)
+    st.session_state.bday_minute = minute_col.number_input('Minute', 0, 59, 0)
+
+    # Latitude and Longitude inputs with direction selection
+    st.subheader('Birth Location Coordinates')
+    lat_deg_col, lat_min_col, lat_dir_col = st.columns(3)
+    st.session_state.bday_latitude_deg = lat_deg_col.number_input('Latitude Degrees', 0, 90)
+    st.session_state.bday_latitude_min = lat_min_col.number_input('Latitude Minutes', 0, 59)
+    st.session_state.bday_latitude_direction = lat_dir_col.selectbox('N/S', ['N', 'S'])
+
+    lon_deg_col, lon_min_col, lon_dir_col = st.columns(3)
+    st.session_state.bday_longitude_deg = lon_deg_col.number_input('Longitude Degrees', 0, 180)
+    st.session_state.bday_longitude_min = lon_min_col.number_input('Longitude Minutes', 0, 59)
+    st.session_state.bday_longitude_direction = lon_dir_col.selectbox('W/E', ['W', 'E'])
 
 def start_end_date():
     """
