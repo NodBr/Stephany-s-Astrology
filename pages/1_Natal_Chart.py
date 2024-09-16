@@ -8,7 +8,6 @@ initialize_session()
 
 # Page title and input section headers
 st.title('Natal Chart Calculator')
-st.header('Birth Data')
 
 birth_data()
 

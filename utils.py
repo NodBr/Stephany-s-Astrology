@@ -28,79 +28,95 @@ def load_json_file(file_path):
         st.error(f"Error decoding JSON in file: {file_path}")
 
 def initialize_session():
-    """
-    Initialize Streamlit session_state with basic data and default configurations.
-    
-    This function loads data related to zodiac signs, planets, and astrological aspects
-    from JSON files and stores them in Streamlit's session state. It also sets default 
-    start and end dates for calculations.
-
-    If the session_state is already initialized, it does nothing.
-    """
-    # Check if the session state is already initialized
-    if 'signs' in st.session_state and 'planets' in st.session_state and 'aspects' in st.session_state:
-        return  # Do nothing if already initialized
-    
     # Load sign data
-    signs_data = load_json_file('data/signs.json')
-    st.session_state.signs = {
-        sign['id']: {
-            'name': sign['name'], 
-            'symbol': sign['symbol'], 
-            'element': sign['element'], 
-            'modality': sign['modality']
-        } for sign in signs_data
-    }
+    if 'signs' not in st.session_state:
+        signs_data = load_json_file('data/signs.json')
+        st.session_state.signs = {
+            sign['id']: {
+                'name': sign['name'], 
+                'symbol': sign['symbol'], 
+                'element': sign['element'], 
+                'modality': sign['modality']
+            } for sign in signs_data
+        }
 
     # Load planet data
-    planets_data = load_json_file('data/planets.json')
-    st.session_state.planets = {
-        planet['id']: {
-            'name': planet['name'], 
-            'symbol': planet['symbol'], 
-            'type': planet['type']
-        } for planet in planets_data
-    }
+    if 'planets' not in st.session_state:
+        planets_data = load_json_file('data/planets.json')
+        st.session_state.planets = {
+            planet['id']: {
+                'name': planet['name'], 
+                'symbol': planet['symbol'], 
+                'type': planet['type']
+            } for planet in planets_data
+        }
 
     # Load aspect data
-    aspects_data = load_json_file('data/aspects.json')
-    st.session_state.aspects = {
-        aspect['id']: {
-            'name': aspect['name'], 
-            'symbol': aspect['symbol'], 
-            'angle': aspect['angle'], 
-            'orb': aspect['orb']
-        } for aspect in aspects_data
-    }
+    if 'aspects' not in st.session_state:
+        aspects_data = load_json_file('data/aspects.json')
+        st.session_state.aspects = {
+            aspect['id']: {
+                'name': aspect['name'], 
+                'symbol': aspect['symbol'], 
+                'angle': aspect['angle'], 
+                'orb': aspect['orb']
+            } for aspect in aspects_data
+        }
     
     # Initialize default date range in session_state
-    st.session_state.start_date = datetime.date.today()
-    st.session_state.end_date = datetime.date.today() + datetime.timedelta(days=365)
+    if 'start_date' not in st.session_state:
+        st.session_state.start_date = datetime.date.today()
+    if 'end_date' not in st.session_state:
+        st.session_state.end_date = datetime.date.today() + datetime.timedelta(days=365)
+
+    # Initialize other session_state variables
+    if 'first_name' not in st.session_state:
+        st.session_state.first_name = None
+    if 'last_name' not in st.session_state:
+        st.session_state.last_name = None
+    if 'bday_date' not in st.session_state:
+        st.session_state.bday_date = None
+    if 'bday_hour' not in st.session_state:
+        st.session_state.bday_hour = None
+    if 'bday_minute' not in st.session_state:
+        st.session_state.bday_minute = None
+    if 'bday_latitude_deg' not in st.session_state:
+        st.session_state.bday_latitude_deg = None
+    if 'bday_latitude_min' not in st.session_state:
+        st.session_state.bday_latitude_min = None
+    if 'bday_latitude_direction' not in st.session_state:
+        st.session_state.bday_latitude_direction = None
+    if 'bday_longitude_deg' not in st.session_state:
+        st.session_state.bday_longitude_deg = None
+    if 'bday_longitude_min' not in st.session_state:
+        st.session_state.bday_longitude_min = None
+    if 'bday_longitude_direction' not in st.session_state:
+        st.session_state.bday_longitude_direction = None   
 
 def birth_data():
     # Input columns for first and last names
     first_name_col, last_name_col = st.columns(2)
-    st.session_state.first_name = first_name_col.text_input('First Name', 'First Name')
-    st.session_state.last_name = last_name_col.text_input('Last Name', 'Last Name')
+    st.session_state.first_name = first_name_col.text_input(label='First Name', value=st.session_state.first_name)
+    st.session_state.last_name = last_name_col.text_input(label='Last Name', value=st.session_state.last_name)
 
     # Date, hour, and minute inputs
     min_date, max_date = dt.date(1000, 1, 1), dt.date(3000, 12, 31)
     date_col, hour_col, minute_col = st.columns([2, 1, 1])
-    st.session_state.bday_date = date_col.date_input('Birthday', value=dt.date.today(), min_value=min_date, max_value=max_date, format='DD/MM/YYYY')
-    st.session_state.bday_hour = hour_col.number_input('Hour UTC', 0, 23, 0)
-    st.session_state.bday_minute = minute_col.number_input('Minute', 0, 59, 0)
+    st.session_state.bday_date = date_col.date_input('Birthday', value=st.session_state.bday_date, min_value=min_date, max_value=max_date, format='DD/MM/YYYY')
+    st.session_state.bday_hour = hour_col.number_input(label='Hour (UTC)', min_value=0, max_value=23, value=st.session_state.bday_hour, step=1)
+    st.session_state.bday_minute = minute_col.number_input(label='Minute', min_value=0, max_value=59, value=st.session_state.bday_minute, step=1)
 
     # Latitude and Longitude inputs with direction selection
     st.subheader('Birth Location Coordinates')
     lat_deg_col, lat_min_col, lat_dir_col = st.columns(3)
-    st.session_state.bday_latitude_deg = lat_deg_col.number_input('Latitude Degrees', 0, 90)
-    st.session_state.bday_latitude_min = lat_min_col.number_input('Latitude Minutes', 0, 59)
-    st.session_state.bday_latitude_direction = lat_dir_col.selectbox('N/S', ['N', 'S'])
+    st.session_state.bday_latitude_deg = lat_deg_col.number_input(label='Latitude Degrees', min_value=0, max_value=90, value=st.session_state.bday_latitude_deg, step=1)
+    st.session_state.bday_latitude_min = lat_min_col.number_input(label='Latitude Minutes', min_value=0, max_value=59, value=st.session_state.bday_latitude_min, step=1)
+    st.session_state.bday_latitude_direction = lat_dir_col.selectbox(label='Direction', options=('N', 'S'), index=None if st.session_state.bday_latitude_direction is None else ['N', 'S'].index(st.session_state.bday_latitude_direction))
 
     lon_deg_col, lon_min_col, lon_dir_col = st.columns(3)
-    st.session_state.bday_longitude_deg = lon_deg_col.number_input('Longitude Degrees', 0, 180)
-    st.session_state.bday_longitude_min = lon_min_col.number_input('Longitude Minutes', 0, 59)
-    st.session_state.bday_longitude_direction = lon_dir_col.selectbox('W/E', ['W', 'E'])
+    st.session_state.bday_longitude_deg = lon_deg_col.number_input(label='Longitude Degrees', min_value=0, max_value=180, value=st.session_state.bday_longitude_deg, step=1)
+    st.session_state.bday_longitude_min = lon_min_col.number_input(label='Longitude Minutes', min_value=0, max_value=59, value=st.session_state.bday_longitude_min, step=1)
+    st.session_state.bday_longitude_direction = lon_dir_col.selectbox(label='Direction', options=['E', 'W'], index=None if st.session_state.bday_longitude_direction is None else ['E', 'W'].index(st.session_state.bday_longitude_direction))
 
 def start_end_date():
     """

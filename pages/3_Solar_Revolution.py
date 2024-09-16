@@ -8,12 +8,13 @@ import pydeck as pdk
 initialize_session()
 
 # Page title and input section headers
-st.title('Natal Chart Calculator')
+st.title('Solar Revolution Calculator')
 st.header('Birth Data')
 
 birth_data()
 
-st.session_state.bday_rs_year = st.number_input(label='Solar Revolution Year', min_value=st.session_state.bday_date.year, max_value=st.session_state.bday_date.year+120, value=st.session_state.bday_date.year, step=1, label_visibility='visible')
+if st.session_state.bday_date is not None:
+    st.session_state.bday_rs_year = st.number_input(label='Solar Revolution Year', min_value=st.session_state.bday_date.year, max_value=st.session_state.bday_date.year+120, value=st.session_state.bday_date.year, step=1, label_visibility='visible')
 
 if st.button(label='Run'):
     # Convert input date and time to Julian Day
