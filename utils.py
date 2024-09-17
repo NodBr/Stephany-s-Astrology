@@ -36,7 +36,9 @@ def initialize_session():
                 'name': sign['name'], 
                 'symbol': sign['symbol'], 
                 'element': sign['element'], 
-                'modality': sign['modality']
+                'modality': sign['modality'],
+                'color': sign['color'],
+                'rgb_color': sign['rgb_color']
             } for sign in signs_data
         }
 

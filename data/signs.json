@@ -1,14 +1,14 @@
 [
-    {"id": 0, "name": "Aries", "symbol": "♈︎", "element": "Fire", "modality": "Cardinal"},
-    {"id": 1, "name": "Taurus", "symbol": "♉︎", "element": "Earth", "modality": "Fixed"},
-    {"id": 2, "name": "Gemini", "symbol": "♊︎", "element": "Air", "modality": "Mutable"},
-    {"id": 3, "name": "Cancer", "symbol": "♋︎", "element": "Water", "modality": "Cardinal"},
-    {"id": 4, "name": "Leo", "symbol": "♌︎", "element": "Fire", "modality": "Fixed"},
-    {"id": 5, "name": "Virgo", "symbol": "♍︎", "element": "Earth", "modality": "Mutable"},
-    {"id": 6, "name": "Libra", "symbol": "♎︎", "element": "Air", "modality": "Cardinal"},
-    {"id": 7, "name": "Scorpio", "symbol": "♏︎", "element": "Water", "modality": "Fixed"},
-    {"id": 8, "name": "Sagittarius", "symbol": "♐︎", "element": "Fire", "modality": "Mutable"},
-    {"id": 9, "name": "Capricorn", "symbol": "♑︎", "element": "Earth", "modality": "Cardinal"},
-    {"id": 10, "name": "Aquarius", "symbol": "♒︎", "element": "Air", "modality": "Fixed"},
-    {"id": 11, "name": "Pisces", "symbol": "♓︎", "element": "Water", "modality": "Mutable"}
+    {"id": 0, "name": "Aries", "symbol": "♈︎", "element": "Fire", "modality": "Cardinal", "color": "#C60000", "rgb_color": [198, 0, 0]},
+    {"id": 1, "name": "Taurus", "symbol": "♉︎", "element": "Earth", "modality": "Fixed", "color": "#179559", "rgb_color": [23, 149, 89]},
+    {"id": 2, "name": "Gemini", "symbol": "♊︎", "element": "Air", "modality": "Mutable", "color": "#FFB100", "rgb_color": [255, 177, 0]},
+    {"id": 3, "name": "Cancer", "symbol": "♋︎", "element": "Water", "modality": "Cardinal", "color": "#B8C2CA", "rgb_color": [184, 194, 202]},
+    {"id": 4, "name": "Leo", "symbol": "♌︎", "element": "Fire", "modality": "Fixed", "color": "#A12600", "rgb_color": [161, 38, 0]},
+    {"id": 5, "name": "Virgo", "symbol": "♍︎", "element": "Earth", "modality": "Mutable", "color": "#A66018", "rgb_color": [166, 96, 24]},
+    {"id": 6, "name": "Libra", "symbol": "♎︎", "element": "Air", "modality": "Cardinal", "color": "#EA987F", "rgb_color": [234, 152, 127]},
+    {"id": 7, "name": "Scorpio", "symbol": "♏︎", "element": "Water", "modality": "Fixed", "color": "#080808", "rgb_color": [8, 8, 8]},
+    {"id": 8, "name": "Sagittarius", "symbol": "♐︎", "element": "Fire", "modality": "Mutable", "color": "#EC6F29", "rgb_color": [236, 111, 41]},
+    {"id": 9, "name": "Capricorn", "symbol": "♑︎", "element": "Earth", "modality": "Cardinal", "color": "#B68C74", "rgb_color": [182, 140, 116]},
+    {"id": 10, "name": "Aquarius", "symbol": "♒︎", "element": "Air", "modality": "Fixed", "color": "#197E91", "rgb_color": [25, 126, 145]},
+    {"id": 11, "name": "Pisces", "symbol": "♓︎", "element": "Water", "modality": "Mutable", "color": "#598F88", "rgb_color": [89, 143, 136]}
 ]
