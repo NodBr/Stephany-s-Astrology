@@ -5,89 +5,115 @@ from utils import initialize_session, datetime_to_julday, calculate_sign, birth_
 import pandas as pd
 import pydeck as pdk
 
+# Initialize session state variables
 initialize_session()
 
-# Page title and input section headers
+# Page title and input section
 st.title('Solar Revolution Calculator')
 st.header('Birth Data')
+birth_data()  # Collect birth data input
 
-birth_data()
-
+# Check if birth date is provided
 if st.session_state.bday_date is not None:
     st.header('Solar Revolution Criteria')
     col1, col2, col3 = st.columns(3)
     
-    # Seleção do ano da Revolução Solar
-    st.session_state.bday_rs_year = col1.number_input(label='Solar Revolution Year', min_value=st.session_state.bday_date.year,max_value=st.session_state.bday_date.year + 120, value=st.session_state.bday_date.year, step=1, label_visibility='visible')
+    # Select Solar Revolution Year
+    st.session_state.sr_year = col1.number_input(
+        label='Solar Revolution Year', 
+        min_value=st.session_state.bday_date.year,
+        max_value=st.session_state.bday_date.year + 120, 
+        value=st.session_state.bday_date.year, 
+        step=1
+    )
     
-    # Obter os nomes dos planetas da sessão
+    # Get planet names for selection
     planet_names = ['Ascendant'] + [planet['name'] for planet in st.session_state.planets.values()]
     
-    # Seleção do planeta
-    st.session_state.rs_view = col2.selectbox(label='View', options=planet_names, index=None)
+    # Select view (planet or Ascendant)
+    st.session_state.sr_view = col2.selectbox(label='View', options=planet_names)
     
-    # Critérios de filtragem
-    if st.session_state.rs_view == 'Ascendant':
-        st.session_state.rs_filter = col3.selectbox(label='Sign Filter', options=[sign['name'] for sign in st.session_state.signs.values()], index=None)
+    # Set filter criteria based on the view selected
+    if st.session_state.sr_view == 'Ascendant':
+        st.session_state.sr_filter = col3.selectbox(
+            label='Sign Filter', 
+            options=[sign['name'] for sign in st.session_state.signs.values()]
+        )
     else:
-        st.session_state.rs_filter = col3.selectbox(label='House Filter', options=['1st House', '2nd House', '3rd House', '4th House', '5th House', '6th House', '7th House', '8th House', '9th House', '10th House', '11th House', '12th House'],index=None)
+        st.session_state.sr_filter = col3.selectbox(
+            label='House Filter', 
+            options=[f'{i}th House' for i in range(1, 13)]
+        )
 
+# Run button to execute calculations
 if st.button(label='Run'):
-    # Convert input date and time to Julian Day
-    birth_dt = dt.datetime(st.session_state.bday_date.year, st.session_state.bday_date.month, st.session_state.bday_date.day, st.session_state.bday_hour, st.session_state.bday_minute)
-    birth_jd = datetime_to_julday(birth_dt)
+    # Convert birth date and time to Julian Day
+    birth_datetime = dt.datetime(
+        st.session_state.bday_date.year, 
+        st.session_state.bday_date.month, 
+        st.session_state.bday_date.day, 
+        st.session_state.bday_hour, 
+        st.session_state.bday_minute
+    )
+    birth_julian_day = datetime_to_julday(birth_datetime)
     
-    # Find Sun's longitude during birth time
-    sun_long = swe.calc_ut(birth_jd, 0)[0][0]
+    # Get Sun's longitude at birth time
+    sun_longitude = swe.calc_ut(birth_julian_day, 0)[0][0]
     
-    # Find julian day for the start of Solar Revolution Year
-    year_start_dt = dt.datetime(st.session_state.bday_rs_year, 1, 1, 0, 0, 0, 0)
-    year_start_jd = datetime_to_julday(year_start_dt)
+    # Find the Julian Day for the start of the Solar Revolution year
+    year_start_datetime = dt.datetime(st.session_state.sr_year, 1, 1)
+    year_start_julian_day = datetime_to_julday(year_start_datetime)
     
-    # Find the julian day of the moment of the Solar Revolution
-    solcross_jd = swe.solcross(sun_long, year_start_jd)
+    # Calculate the Julian Day of the Solar Revolution
+    solar_cross_julian_day = swe.solcross(sun_longitude, year_start_julian_day)
     
-# Calculate ascendant for every coordinate
-    results = []
-    for latitude in range(-66, 67, 1):
-        for longitude in range(-180, 180, 1):
-            asc_lon = swe.houses(solcross_jd, latitude, longitude)[0][0]
-            asc_sign = calculate_sign(asc_lon)
-            sign_data = st.session_state.signs[asc_sign]
-            results.append({
-                'latitude': latitude,
-                'longitude': longitude,
-                'asc_lon': asc_lon,
-                'asc_sign': sign_data['name'],
-                'rgb_color': sign_data['rgb_color']
-            })
+    # Calculate Ascendant for a range of coordinates and store results
+    results = [
+        {
+            'latitude': lat,
+            'longitude': lon,
+            'number': calculate_sign(swe.houses(solar_cross_julian_day, lat, lon)[0][0]),
+            'rgb_color': tuple(st.session_state.signs[calculate_sign(swe.houses(solar_cross_julian_day, lat, lon)[0][0])]['rgb_color']),  # Convert list to tuple
+            'caption': st.session_state.signs[calculate_sign(swe.houses(solar_cross_julian_day, lat, lon)[0][0])]['name']
+        }
+        for lat in range(-66, 67)
+        for lon in range(-180, 180)
+    ]
     results_df = pd.DataFrame(results)
 
-    # Create a Pydeck layer for the map with colors from DataFrame
+    # Sort the DataFrame by 'number' to maintain natural order of signs
+    results_df_sorted = results_df[['number', 'caption', 'rgb_color']].drop_duplicates().sort_values(by='number')
+
+    # Create a Pydeck layer for the map using the DataFrame
     layer = pdk.Layer(
         'ScatterplotLayer',
         data=results_df,
         get_position='[longitude, latitude]',
-        get_fill_color='[rgb_color[0], rgb_color[1], rgb_color[2], 120]',  # Using RGB values with transparency
+        get_fill_color='[rgb_color[0], rgb_color[1], rgb_color[2], 120]',  # RGBA with transparency
         get_radius=30000,
         pickable=True
     )
 
-    # Set up the view for the map
+    # Set up the map view
     view_state = pdk.ViewState(
         latitude=0,
         longitude=0,
         zoom=1
     )
 
-    # Render the map using Pydeck
-    r = pdk.Deck(layers=[layer], initial_view_state=view_state)
-    st.pydeck_chart(r)
+    # Render the map with Pydeck
+    st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state))
 
-    # Add a legend with colors and signs below the chart
-    cols = st.columns(4)  # Create four columns
+    # Create a legend using the sorted DataFrame
+    unique_signs = results_df_sorted.to_dict(orient='records')
+    cols = st.columns(4)  # We know we want 4 columns for the 12 signs
 
-    for id, sign_data in st.session_state.signs.items():
-        color = sign_data['color']
-        col = cols[id % 4]  # Distribute items across the four columns
-        col.markdown(f'<span style="display: inline-block; width: 16px; height: 16px; background-color: {color}; margin-right: 8px;"></span> {sign_data["name"]}', unsafe_allow_html=True)
+    # Distribute 12 items across 4 columns
+    for idx, sign_data in enumerate(unique_signs):
+        color = sign_data['rgb_color']
+        caption = sign_data['caption']
+        col_idx = idx % 4
+        cols[col_idx].markdown(
+            f'<span style="display: inline-block; width: 16px; height: 16px; background-color: rgb({color[0]}, {color[1]}, {color[2]}); margin-right: 8px;"></span> {caption}', 
+            unsafe_allow_html=True
+        )
