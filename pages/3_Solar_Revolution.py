@@ -35,9 +35,10 @@ if st.session_state.bday_date is not None:
     
     # Set filter criteria based on the view selected
     if st.session_state.sr_view == 'Ascendant':
+        sign_options = ['All'] + [sign['name'] for sign in st.session_state.signs.values()]
         st.session_state.sr_filter = col3.selectbox(
             label='Sign Filter', 
-            options=[sign['name'] for sign in st.session_state.signs.values()]
+            options=sign_options
         )
     else:
         st.session_state.sr_filter = col3.selectbox(
@@ -81,13 +82,19 @@ if st.button(label='Run'):
     ]
     results_df = pd.DataFrame(results)
 
-    # Sort the DataFrame by 'number' to maintain natural order of signs
-    results_df_sorted = results_df[['number', 'caption', 'rgb_color']].drop_duplicates().sort_values(by='number')
+    # Apply the sign filter if the view is 'Ascendant'
+    if st.session_state.sr_view == 'Ascendant' and st.session_state.sr_filter != 'All':
+        filtered_df = results_df[results_df['caption'] == st.session_state.sr_filter]
+    else:
+        filtered_df = results_df  # No filtering or "All" selected
 
-    # Create a Pydeck layer for the map using the DataFrame
+    # Sort the DataFrame by 'number' to maintain natural order of signs
+    results_df_sorted = filtered_df[['number', 'caption', 'rgb_color']].drop_duplicates().sort_values(by='number')
+
+    # Create a Pydeck layer for the map using the filtered DataFrame
     layer = pdk.Layer(
         'ScatterplotLayer',
-        data=results_df,
+        data=filtered_df,
         get_position='[longitude, latitude]',
         get_fill_color='[rgb_color[0], rgb_color[1], rgb_color[2], 120]',  # RGBA with transparency
         get_radius=30000,
@@ -106,7 +113,7 @@ if st.button(label='Run'):
 
     # Create a legend using the sorted DataFrame
     unique_signs = results_df_sorted.to_dict(orient='records')
-    cols = st.columns(4)  # We know we want 4 columns for the 12 signs
+    cols = st.columns(4)
 
     # Distribute 12 items across 4 columns
     for idx, sign_data in enumerate(unique_signs):
