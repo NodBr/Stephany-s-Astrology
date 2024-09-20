@@ -1,0 +1,14 @@
+[
+    {"id": 1, "name": "1st House", "symbol": "🌅", "roman_numeral": "I"},
+    {"id": 2, "name": "2nd House", "symbol": "💰", "roman_numeral": "II"},
+    {"id": 3, "name": "3rd House", "symbol": "🗣️", "roman_numeral": "III"},
+    {"id": 4, "name": "4th House", "symbol": "🏡", "roman_numeral": "IV"},
+    {"id": 5, "name": "5th House", "symbol": "🎨", "roman_numeral": "V"},
+    {"id": 6, "name": "6th House", "symbol": "⚕️", "roman_numeral": "VI"},
+    {"id": 7, "name": "7th House", "symbol": "💍", "roman_numeral": "VII"},
+    {"id": 8, "name": "8th House", "symbol": "💀", "roman_numeral": "VIII"},
+    {"id": 9, "name": "9th House", "symbol": "🌍", "roman_numeral": "IX"},
+    {"id": 10, "name": "10th House", "symbol": "🏆", "roman_numeral": "X"},
+    {"id": 11, "name": "11th House", "symbol": "🌐", "roman_numeral": "XI"},
+    {"id": 12, "name": "12th House", "symbol": "💤", "roman_numeral": "XII"}
+]
