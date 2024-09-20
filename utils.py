@@ -259,3 +259,38 @@ def sign_string(lon):
     sec_int = round(second)  # Rounded to avoid float precision issues
     # Return formatted string
     return f'{sign_symbol} {deg_int}° {min_int}\' {sec_int}\"'
+
+def find_house(jd, planet_id, lat, lon, hsys=b'P'):
+    """
+    Calculate the astrological house position of a planet at a given Julian day and location.
+
+    Parameters:
+    jd (float): The Julian day representing the exact time for the calculation.
+    planet_id (int): The ID of the planet to compute (e.g., 0 = Sun, 1 = Moon, 2 = Mercury, etc).
+    lat (float): The geographic latitude of the location (in degrees).
+    lon (float): The geographic longitude of the location (in degrees).
+    hsys (bytes, optional): The house system to be used (default is b'P' for Placidus).
+
+    Returns:
+    int: The house position of the planet.
+    """
+    # Calculate ARMC (Apparent Right Ascension of the Meridian)
+    armc = swe.sidtime(jd) * 15 + lon
+    
+    # Calculate the ecliptic obliquity
+    eps = swe.calc_ut(jd, swe.ECL_NUT)[0][0]
+    
+    # Get the ecliptic longitude and latitude of the planet
+    planet_pos = swe.calc_ut(jd, planet_id)[0]
+    ecl_lon = planet_pos[0]
+    ecl_lat = planet_pos[1]
+    
+    # Prepare the input for house position calculation
+    xpin = (ecl_lon, ecl_lat)
+    serr = bytes(256)
+    
+    # Calculate the house position
+    house_pos = swe.house_pos(armc, lat, eps, xpin, hsys)
+    house_number = int(house_pos)
+    
+    return house_number

@@ -1,7 +1,7 @@
 import streamlit as st
 import swisseph as swe
 import datetime as dt
-from utils import initialize_session, datetime_to_julday, calculate_sign, birth_data
+from utils import initialize_session, datetime_to_julday, calculate_sign, birth_data, find_house
 import pandas as pd
 import pydeck as pdk
 
@@ -43,7 +43,7 @@ if st.session_state.bday_date is not None:
     else:
         st.session_state.sr_filter = col3.selectbox(
             label='House Filter', 
-            options=[f'{i}th House' for i in range(1, 13)]
+            options=['All house'] + [f'{i}th House' for i in range(1, 13)]
         )
 
 # Run button to execute calculations
@@ -68,18 +68,37 @@ if st.button(label='Run'):
     # Calculate the Julian Day of the Solar Revolution
     solar_cross_julian_day = swe.solcross(sun_longitude, year_start_julian_day)
     
-    # Calculate Ascendant for a range of coordinates and store results
-    results = [
-        {
-            'latitude': lat,
-            'longitude': lon,
-            'number': calculate_sign(swe.houses(solar_cross_julian_day, lat, lon)[0][0]),
-            'rgb_color': tuple(st.session_state.signs[calculate_sign(swe.houses(solar_cross_julian_day, lat, lon)[0][0])]['rgb_color']),  # Convert list to tuple
-            'caption': st.session_state.signs[calculate_sign(swe.houses(solar_cross_julian_day, lat, lon)[0][0])]['name']
-        }
-        for lat in range(-66, 67)
-        for lon in range(-180, 180)
-    ]
+    if st.session_state.sr_view == 'Ascendant':
+        # Calculate Ascendant for a range of coordinates and store results
+        results = [
+            {
+                'latitude': lat,
+                'longitude': lon,
+                'number': calculate_sign(swe.houses(solar_cross_julian_day, lat, lon)[0][0]),
+                'rgb_color': tuple(st.session_state.signs[calculate_sign(swe.houses(solar_cross_julian_day, lat, lon)[0][0])]['rgb_color']),  # Convert list to tuple
+                'caption': st.session_state.signs[calculate_sign(swe.houses(solar_cross_julian_day, lat, lon)[0][0])]['name']
+            }
+            for lat in range(-66, 67)
+            for lon in range(-180, 179)
+        ]
+    else:
+        results=[]
+        planet_id = None
+        for pid, planet in st.session_state.planets.items():
+            if planet['name'] == st.session_state.sr_view:
+                planet_id = pid
+                break
+        for lat in range(-66,67):
+            for lon in range(-180, 180):
+                number = find_house(solar_cross_julian_day, pid, lat, lon) - 1 
+                results.append({
+                    'latitude': lat,
+                    'longitude': lon,
+                    'number': number,
+                    'rgb_color': tuple(st.session_state.signs[number]['rgb_color']),
+                    'caption': f'{number+1} house'
+                })
+
     results_df = pd.DataFrame(results)
 
     # Apply the sign filter if the view is 'Ascendant'
