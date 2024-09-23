@@ -43,7 +43,7 @@ if st.session_state.bday_date is not None:
     else:
         st.session_state.sr_filter = col3.selectbox(
             label='House Filter', 
-            options=['All house'] + [f'{i}th House' for i in range(1, 13)]
+            options=['All houses'] + [house['name'] for house in st.session_state.houses.values()]
         )
 
 # Run button to execute calculations
@@ -90,19 +90,21 @@ if st.button(label='Run'):
                 break
         for lat in range(-66,67):
             for lon in range(-180, 180):
-                number = find_house(solar_cross_julian_day, pid, lat, lon) - 1 
+                number = find_house(solar_cross_julian_day, pid, lat, lon)
                 results.append({
                     'latitude': lat,
                     'longitude': lon,
                     'number': number,
-                    'rgb_color': tuple(st.session_state.signs[number]['rgb_color']),
-                    'caption': f'{number+1} house'
+                    'rgb_color': tuple(st.session_state.signs[number-1]['rgb_color']),
+                    'caption': st.session_state.houses[number]['name']
                 })
 
     results_df = pd.DataFrame(results)
 
     # Apply the sign filter if the view is 'Ascendant'
     if st.session_state.sr_view == 'Ascendant' and st.session_state.sr_filter != 'All':
+        filtered_df = results_df[results_df['caption'] == st.session_state.sr_filter]
+    elif st.session_state.sr_view != 'Ascendant' and st.session_state.sr_filter != 'All houses':
         filtered_df = results_df[results_df['caption'] == st.session_state.sr_filter]
     else:
         filtered_df = results_df  # No filtering or "All" selected

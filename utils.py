@@ -42,6 +42,17 @@ def initialize_session():
             } for sign in signs_data
         }
 
+    # Load astrological house data
+    if 'houses' not in st.session_state:
+        houses_data = load_json_file('data/houses.json')
+        st.session_state.houses = {
+            house['id']: {
+                'name': house['name'],
+                'symbol': house['symbol'],
+                'roman': house['roman_numeral']
+            } for house in houses_data
+        } 
+
     # Load planet data
     if 'planets' not in st.session_state:
         planets_data = load_json_file('data/planets.json')
