@@ -4,6 +4,7 @@ import datetime
 import swisseph as swe
 import pandas as pd
 import datetime as dt
+import requests
 
 def load_json_file(file_path):
     """
@@ -107,6 +108,20 @@ def initialize_session():
         st.session_state.bday_longitude_direction = None   
 
 def birth_data():
+    def get_coordinates(city_name):
+        api_key = '4c0bc0bb660c4b4cb7c6f01873c9d372'
+        url = f'https://api.opencagedata.com/geocode/v1/json?q={city_name}&key={api_key}'
+        response = requests.get(url)
+        data = response.json()
+
+        if data['results']:
+            result = data['results'][0]
+            latitude = result['geometry']['lat']
+            longitude = result['geometry']['lng']
+            return latitude, longitude
+        else:
+            return None, None
+    
     # Input columns for first and last names
     first_name_col, last_name_col = st.columns(2)
     st.session_state.first_name = first_name_col.text_input(label='First Name', value=st.session_state.first_name)
@@ -119,17 +134,26 @@ def birth_data():
     st.session_state.bday_hour = hour_col.number_input(label='Hour (UTC)', min_value=0, max_value=23, value=st.session_state.bday_hour, step=1)
     st.session_state.bday_minute = minute_col.number_input(label='Minute', min_value=0, max_value=59, value=st.session_state.bday_minute, step=1)
 
-    # Latitude and Longitude inputs with direction selection
-    st.subheader('Birth Location Coordinates')
-    lat_deg_col, lat_min_col, lat_dir_col = st.columns(3)
-    st.session_state.bday_latitude_deg = lat_deg_col.number_input(label='Latitude Degrees', min_value=0, max_value=90, value=st.session_state.bday_latitude_deg, step=1)
-    st.session_state.bday_latitude_min = lat_min_col.number_input(label='Latitude Minutes', min_value=0, max_value=59, value=st.session_state.bday_latitude_min, step=1)
-    st.session_state.bday_latitude_direction = lat_dir_col.selectbox(label='Direction', options=('N', 'S'), index=None if st.session_state.bday_latitude_direction is None else ['N', 'S'].index(st.session_state.bday_latitude_direction))
+    st.subheader('Birth Location')
+    city_col = st.columns(1)
+    st.session_state.city_name = city_col[0].text_input(label='City of Birth', value=st.session_state.get('city_name', ''))
 
-    lon_deg_col, lon_min_col, lon_dir_col = st.columns(3)
-    st.session_state.bday_longitude_deg = lon_deg_col.number_input(label='Longitude Degrees', min_value=0, max_value=180, value=st.session_state.bday_longitude_deg, step=1)
-    st.session_state.bday_longitude_min = lon_min_col.number_input(label='Longitude Minutes', min_value=0, max_value=59, value=st.session_state.bday_longitude_min, step=1)
-    st.session_state.bday_longitude_direction = lon_dir_col.selectbox(label='Direction', options=['E', 'W'], index=None if st.session_state.bday_longitude_direction is None else ['E', 'W'].index(st.session_state.bday_longitude_direction))
+    if st.session_state.city_name:
+        latitude, longitude = get_coordinates(st.session_state.city_name)
+        if latitude and longitude:
+            st.write(f"Coordinates for {st.session_state.city_name}:")
+            st.write(f"Latitude: {latitude}, Longitude: {longitude}")
+            # Save latitude and longitude in the same session_state keys as before
+            st.session_state.bday_latitude_deg = int(abs(latitude))  # Convert to integer degrees
+            st.session_state.bday_latitude_min = int((abs(latitude) - abs(int(latitude))) * 60)  # Convert to minutes
+            st.session_state.bday_latitude_direction = 'N' if latitude >= 0 else 'S'
+
+            st.session_state.bday_longitude_deg = int(abs(longitude))
+            st.session_state.bday_longitude_min = int((abs(longitude) - abs(int(longitude))) * 60)
+            st.session_state.bday_longitude_direction = 'E' if longitude >= 0 else 'W'
+        else:
+            st.error("City not found. Please try a different one.")
+
 
 def start_end_date():
     """
