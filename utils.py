@@ -5,6 +5,7 @@ import swisseph as swe
 import pandas as pd
 import datetime as dt
 import requests
+import pytz
 
 def load_json_file(file_path):
     """
@@ -118,20 +119,21 @@ def birth_data():
             result = data['results'][0]
             latitude = result['geometry']['lat']
             longitude = result['geometry']['lng']
-            return latitude, longitude
+            timezone = result['annotations']['timezone']['name']  # Retrieve timezone from the API
+            return latitude, longitude, timezone
         else:
-            return None, None
+            return None, None, None
     
     # Input columns for first and last names
     first_name_col, last_name_col = st.columns(2)
     st.session_state.first_name = first_name_col.text_input(label='First Name', value=st.session_state.first_name)
     st.session_state.last_name = last_name_col.text_input(label='Last Name', value=st.session_state.last_name)
 
-    # Date, hour, and minute inputs
+    # Date, hour, and minute inputs (for local time)
     min_date, max_date = dt.date(1000, 1, 1), dt.date(3000, 12, 31)
     date_col, hour_col, minute_col = st.columns([2, 1, 1])
     st.session_state.bday_date = date_col.date_input('Birthday', value=st.session_state.bday_date, min_value=min_date, max_value=max_date, format='DD/MM/YYYY')
-    st.session_state.bday_hour = hour_col.number_input(label='Hour (UTC)', min_value=0, max_value=23, value=st.session_state.bday_hour, step=1)
+    st.session_state.bday_hour = hour_col.number_input(label='Hour (Local Time)', min_value=0, max_value=23, value=st.session_state.bday_hour, step=1)
     st.session_state.bday_minute = minute_col.number_input(label='Minute', min_value=0, max_value=59, value=st.session_state.bday_minute, step=1)
 
     st.subheader('Birth Location')
@@ -139,10 +141,8 @@ def birth_data():
     st.session_state.city_name = city_col[0].text_input(label='City of Birth', value=st.session_state.get('city_name', ''))
 
     if st.session_state.city_name:
-        latitude, longitude = get_coordinates(st.session_state.city_name)
+        latitude, longitude, timezone = get_coordinates(st.session_state.city_name)
         if latitude and longitude:
-            st.write(f"Coordinates for {st.session_state.city_name}:")
-            st.write(f"Latitude: {latitude}, Longitude: {longitude}")
             # Save latitude and longitude in the same session_state keys as before
             st.session_state.bday_latitude_deg = int(abs(latitude))  # Convert to integer degrees
             st.session_state.bday_latitude_min = int((abs(latitude) - abs(int(latitude))) * 60)  # Convert to minutes
@@ -151,9 +151,26 @@ def birth_data():
             st.session_state.bday_longitude_deg = int(abs(longitude))
             st.session_state.bday_longitude_min = int((abs(longitude) - abs(int(longitude))) * 60)
             st.session_state.bday_longitude_direction = 'E' if longitude >= 0 else 'W'
+
+            # Convert local time to UTC using the timezone
+            local_time = dt.datetime(
+                year=st.session_state.bday_date.year,
+                month=st.session_state.bday_date.month,
+                day=st.session_state.bday_date.day,
+                hour=st.session_state.bday_hour,
+                minute=st.session_state.bday_minute
+            )
+            tz = pytz.timezone(timezone)
+
+            local_time_with_tz = tz.localize(local_time)
+
+            # Convert to UTC
+            utc_time = local_time_with_tz.astimezone(pytz.utc)
+            st.session_state.bday_utc_time = utc_time
+            
+            st.session_state.bday_julday_utc = datetime_to_julday(utc_time)
         else:
             st.error("City not found. Please try a different one.")
-
 
 def start_end_date():
     """

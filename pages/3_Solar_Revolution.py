@@ -48,15 +48,8 @@ if st.session_state.bday_date is not None:
 
 # Run button to execute calculations
 if st.button(label='Run'):
-    # Convert birth date and time to Julian Day
-    birth_datetime = dt.datetime(
-        st.session_state.bday_date.year, 
-        st.session_state.bday_date.month, 
-        st.session_state.bday_date.day, 
-        st.session_state.bday_hour, 
-        st.session_state.bday_minute
-    )
-    birth_julian_day = datetime_to_julday(birth_datetime)
+    # Use the pre-calculated Julian Day from birth data (in UTC)
+    birth_julian_day = st.session_state.bday_julday_utc
     
     # Get Sun's longitude at birth time
     sun_longitude = swe.calc_ut(birth_julian_day, 0)[0][0]
@@ -82,13 +75,13 @@ if st.button(label='Run'):
             for lon in range(-180, 179)
         ]
     else:
-        results=[]
+        results = []
         planet_id = None
         for pid, planet in st.session_state.planets.items():
             if planet['name'] == st.session_state.sr_view:
                 planet_id = pid
                 break
-        for lat in range(-66,67):
+        for lat in range(-66, 67):
             for lon in range(-180, 180):
                 number = find_house(solar_cross_julian_day, pid, lat, lon)
                 results.append({
