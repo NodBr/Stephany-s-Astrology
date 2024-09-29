@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
-import datetime as dt
 import swisseph as swe
-from utils import datetime_to_julday, initialize_session, sign_string, find_aspect, birth_data
+import matplotlib.pyplot as plt
+from utils import initialize_session, sign_string, find_aspect, birth_data, find_house, calculate_sign
 
 initialize_session()
 
@@ -15,73 +15,46 @@ birth_data()
 if st.button('Show Chart'):
     st.header(f'{st.session_state.first_name} {st.session_state.last_name}\'s Natal Chart')
 
-    # Convert input date and time to Julian Day
-    birth_datetime = dt.datetime(
-        st.session_state.bday_date.year,
-        st.session_state.bday_date.month,
-        st.session_state.bday_date.day,
-        st.session_state.bday_hour,
-        st.session_state.bday_minute)
-    birth_julian_day = datetime_to_julday(birth_datetime)
-
     # Convert latitude and longitude to decimal format
     latitude_decimal = st.session_state.bday_latitude_deg + st.session_state.bday_latitude_min / 60
     longitude_decimal = st.session_state.bday_longitude_deg + st.session_state.bday_longitude_min / 60
     latitude_decimal *= -1 if st.session_state.bday_latitude_direction == 'S' else 1
     longitude_decimal *= -1 if st.session_state.bday_longitude_direction == 'W' else 1
 
-    # Calculate astrological houses
-    calculated_houses_data = []
+    # Calculate houses directly into a DataFrame
     house_system = b'P'  # Placidus system
-    house_cusps, ascmc = swe.houses(birth_julian_day, latitude_decimal, longitude_decimal, house_system)
+    house_cusps, ascmc = swe.houses(st.session_state.bday_julday_utc, latitude_decimal, longitude_decimal, house_system)
+    
+    houses_df = pd.DataFrame({
+        'House': range(1, len(house_cusps) + 1),
+        'Longitude': house_cusps,
+    })
+    houses_df['Sign'] = houses_df['Longitude'].apply(calculate_sign)
+    houses_df['Longitude_str'] = houses_df['Longitude'].apply(sign_string)
 
-    for id in range(len(house_cusps)):
-        calculated_houses_data.append({
-            'House': id+1,
-            '.Longitude': house_cusps[id],
-            'Longitude': sign_string(house_cusps[id])
-        })
-
-    # Prepare house cusp data
-    houses_df = pd.DataFrame(calculated_houses_data)
-
-    # Calculate planet positions
-    calculated_planets_data = []
+    # Calculate planet positions into a DataFrame
+    planet_data = []
     for id, planet in st.session_state.planets.items():
-        lon, lat, dist, lon_speed, lat_speed, dist_speed = swe.calc_ut(birth_julian_day, id)[0]
+        lon, lat, dist, lon_speed, lat_speed, dist_speed = swe.calc_ut(st.session_state.bday_julday_utc, id)[0]
         retrograde_status = '℞' if lon_speed < 0 else ""
-        calculated_planets_data.append({
-            '.id': id,
-            'Name': planet["name"],
-            'Direction': retrograde_status,
-            'Symbol': planet['symbol'],
-            '.Longitude': lon,
-            '.Latitude': lat,
-            '.Distance': dist,
-            '.Lon_speed': lon_speed,
-            '.Lat_speed': lat_speed,
-            '.Dist_speed': dist_speed,
-            'Longitude': sign_string(lon)
-        })
+        planet_data.append([id, planet["name"], retrograde_status, planet['symbol'], find_house(st.session_state.bday_julday_utc, id, latitude_decimal, longitude_decimal), calculate_sign(lon), lon, lat, dist, lon_speed, lat_speed, dist_speed, sign_string(lon)])
 
-    planets_df = pd.DataFrame(calculated_planets_data)
+    planets_df = pd.DataFrame(planet_data, columns=['id', 'Name', 'Direction', 'Symbol', 'House', 'Sign', 'Longitude', 'Latitude', 'Distance', 'Lon_speed', 'Lat_speed', 'Dist_speed', 'Longitude_str'])
 
-    # Filter out columns that start with a period ('.')
-    planets_df_visible = planets_df.loc[:, ~planets_df.columns.str.startswith('.')]
-    houses_df_visible = houses_df.loc[:, ~houses_df.columns.str.startswith('.')]
-
-    # Calculate aspects
-    planetary_symbols = [planet['symbol'] for planet in st.session_state.planets.values()]
+    # Calculate aspects using vectorized approach (if possible)
+    planetary_symbols = planets_df['Symbol'].tolist()
     planetary_aspect_matrix = pd.DataFrame('', index=planetary_symbols, columns=planetary_symbols)
-    for i in range(len(calculated_planets_data)):
-        lon1 = calculated_planets_data[i]['.Longitude']
-        for j in range(i+1, len(calculated_planets_data)):
-            lon2 = calculated_planets_data[j]['.Longitude']
+
+    for i, lon1 in enumerate(planets_df['Longitude']):
+        for j in range(i + 1, len(planets_df)):
+            lon2 = planets_df.loc[j, 'Longitude']
             aspect = find_aspect(lon1, lon2)
             if aspect is not None:
-                aspect_symbol = st.session_state.aspects[aspect]['symbol']
-                # Add the aspect to both (planet1, planet2) and (planet2, planet1) positions
-                planetary_aspect_matrix.iloc[j, i] = aspect_symbol
+                planetary_aspect_matrix.iloc[j, i] = st.session_state.aspects[aspect]['symbol']
+
+    # Filter visible columns (excluding helper columns like Longitude_str)
+    planets_df_visible = planets_df[['Name', 'Direction', 'Symbol', 'House', 'Longitude_str']]
+    houses_df_visible = houses_df[['House', 'Longitude_str']]
 
     # Display DataFrames
     planets_col, houses_col = st.columns([2, 1])
@@ -89,7 +62,59 @@ if st.button('Show Chart'):
     planets_col.write(planets_df_visible.to_html(index=False), unsafe_allow_html=True)
     houses_col.subheader('House Cusps')
     houses_col.write(houses_df_visible.to_html(index=False), unsafe_allow_html=True)
-    
+
     # Display the aspect matrix with maximum width
     st.subheader('Aspects Matrix')
     st.dataframe(planetary_aspect_matrix, use_container_width=True)
+
+    # Display Elements and Modalities Graphs
+    weights = [3, 3, 2, 2, 2, 2, 1, 1, 1, 1]  # Planetary weights in order
+
+    # Initialize counts for elements and modalities
+    elements = {'Fire': 0, 'Earth': 0, 'Water': 0, 'Air': 0}
+    modalities = {'Cardinal': 0, 'Fixed': 0, 'Mutable': 0}
+
+    # Helper function to update elements and modalities based on sign
+    def update_element_and_modality_by_sign(sign, weight):
+        """Updates the element and modality totals based on the given sign and weight."""
+        element = st.session_state.signs[sign]['element']
+        modality = st.session_state.signs[sign]['modality']
+        elements[element] += weight
+        modalities[modality] += weight
+
+    # Add house elements and modalities (using weight of 3 for ASC and MC)
+    update_element_and_modality_by_sign(houses_df.loc[0, 'Sign'], 3)  # ASC
+    update_element_and_modality_by_sign(houses_df.loc[9, 'Sign'], 3)  # MC
+
+    # Add planet elements and modalities
+    for idx, row in planets_df.iterrows():
+        update_element_and_modality_by_sign(row['Sign'], weights[idx])
+
+    # Display the elements bar chart using matplotlib
+    el, mod = st.columns(2)
+    el.subheader('Element Distribution')
+
+    # Define the colors for elements
+    element_colors = {'Fire': '#FE6C6D', 'Earth': 'green', 'Air': '#FFC354', 'Water': '#69BDF9'}
+
+    # Plot elements bar chart
+    fig, ax = plt.subplots()
+    ax.bar(elements.keys(), elements.values(), color=[element_colors[element] for element in elements.keys()])
+    ax.set_xlabel('Element')
+    ax.set_ylabel('Weight')
+    ax.set_title('Element Distribution')
+    el.pyplot(fig)
+
+    # Display the modalities bar chart using matplotlib
+    mod.subheader('Modality Distribution')
+
+    # Define the colors for modalities
+    modality_colors = {'Cardinal': 'orange', 'Fixed': 'brown', 'Mutable': '#AFB9FF'}
+
+    # Plot modalities bar chart
+    fig, ax = plt.subplots()
+    ax.bar(modalities.keys(), modalities.values(), color=[modality_colors[modality] for modality in modalities.keys()])
+    ax.set_xlabel('Modality')
+    ax.set_ylabel('Weight')
+    ax.set_title('Modality Distribution')
+    mod.pyplot(fig)
