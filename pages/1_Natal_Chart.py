@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import swisseph as swe
-import matplotlib.pyplot as plt
 from utils import initialize_session, sign_string, find_aspect, birth_data, find_house, calculate_sign
 
 initialize_session()
@@ -90,31 +89,17 @@ if st.button('Show Chart'):
     for idx, row in planets_df.iterrows():
         update_element_and_modality_by_sign(row['Sign'], weights[idx])
 
-    # Display the elements bar chart using matplotlib
+    # Display the elements bar chart using Streamlit st.bar_chart
     el, mod = st.columns(2)
     el.subheader('Element Distribution')
 
-    # Define the colors for elements
-    element_colors = {'Fire': '#FE6C6D', 'Earth': 'green', 'Air': '#FFC354', 'Water': '#69BDF9'}
+    # Create DataFrame for element distribution and use st.bar_chart
+    elements_df = pd.DataFrame(elements.items(), columns=['Element', 'Weight']).set_index('Element')
+    el.bar_chart(elements_df)
 
-    # Plot elements bar chart
-    fig, ax = plt.subplots()
-    ax.bar(elements.keys(), elements.values(), color=[element_colors[element] for element in elements.keys()])
-    ax.set_xlabel('Element')
-    ax.set_ylabel('Weight')
-    ax.set_title('Element Distribution')
-    el.pyplot(fig)
-
-    # Display the modalities bar chart using matplotlib
+    # Display the modalities bar chart using Streamlit st.bar_chart
     mod.subheader('Modality Distribution')
 
-    # Define the colors for modalities
-    modality_colors = {'Cardinal': 'orange', 'Fixed': 'brown', 'Mutable': '#AFB9FF'}
-
-    # Plot modalities bar chart
-    fig, ax = plt.subplots()
-    ax.bar(modalities.keys(), modalities.values(), color=[modality_colors[modality] for modality in modalities.keys()])
-    ax.set_xlabel('Modality')
-    ax.set_ylabel('Weight')
-    ax.set_title('Modality Distribution')
-    mod.pyplot(fig)
+    # Create DataFrame for modality distribution and use st.bar_chart
+    modalities_df = pd.DataFrame(modalities.items(), columns=['Modality', 'Weight']).set_index('Modality')
+    mod.bar_chart(modalities_df)
